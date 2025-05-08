@@ -31,6 +31,7 @@ public:
     float get_cos(const vec3d &a) const;
     float scale();
     float calc_point();
+    void reset();
 
 
     vec3d operator+(const vec3d &a) const;
@@ -72,6 +73,7 @@ public:
     quaternion conjugate() const;
     float abs() const;
     quaternion normalize() const;
+    void reset();
 
     quaternion operator+(const quaternion &a) const;
     quaternion operator-(const quaternion &a) const;
@@ -82,6 +84,6 @@ public:
 
 matrix solve(const matrix &a, const matrix &b);
 vec3d move(const vec3d &a, const vec3d &b, float anglex = 0.0f, float angley = 0.0f, float anglez = 0.0f);
-vec3d rotate_with_quaternion(const vec3d &a, const vec3d &axis = vec3d(0, 0, 0), float angles[3] = {0});
-
+vec3d rotate_with_quaternion(const vec3d &a, const vec3d &axis, float angle);
+vec3d rotate_with_quaternion_with_three_angles(const vec3d &a, float angle1, float angle2, float angle3);
 #endif

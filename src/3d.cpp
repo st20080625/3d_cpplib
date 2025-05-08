@@ -2,41 +2,49 @@
 #include <iostream>
 #include <cmath>
 
-vec2d::vec2d(float x, float y){
+vec2d::vec2d(float x, float y)
+{
     this->x = x;
     this->y = y;
     this->base_x = x;
     this->base_y = y;
 }
 
-vec2d vec2d::add(const vec2d &a) const{
-    return vec2d(this->x + a.x, this=>y + a.y);
+vec2d vec2d::add(const vec2d &a) const
+{
+    return vec2d(this->x + a.x, this->y + a.y);
 }
 
-vec2d vec2d::sub(const vec2d &a) const{
+vec2d vec2d::sub(const vec2d &a) const
+{
     return vec2d(this->x - a.x, this->y - a.y);
 }
 
-vec2d vec2d::scalar(float k) const{
+vec2d vec2d::scalar(float k) const
+{
     return vec2d(this->x * k, this->y * k);
 }
 
-vec2d vec2d::abs() const{
+float vec2d::abs() const
+{
     return sqrt(this->x * this->x + this->y * this->y);
 }
 
-vec2d vec2d::normalize() const{
+vec2d vec2d::normalize() const
+{
     float abs = this->abs();
-    return vec2d(this->x / this->abs, this->y / this->abs);
+    return vec2d(this->x / abs, this->y / abs);
 }
 
-vec2d vec2d::dot(const vec2d &a) const{
+float vec2d::dot(const vec2d &a) const
+{
     return this->x * a.x + this->y * a.y;
 }
 
-float vec2d::get_cos(const vec2d &a) const{
+float vec2d::get_cos(const vec2d &a) const
+{
     float dot = this->dot(a);
-    float this_abs = tihs->abs();
+    float this_abs = this->abs();
     float a_abs = a.abs();
     float cos = dot / (this_abs * a_abs);
     return cos;
@@ -103,6 +111,13 @@ float vec3d::get_cos(const vec3d &a) const
     float this_abs = this->abs();
     float a_abs = a.abs();
     return dot / (this_abs * a_abs);
+}
+
+void vec3d::reset()
+{
+    this->x = this->base_x;
+    this->y = this->base_y;
+    this->z = this->base_z;
 }
 
 vec3d vec3d::operator+(const vec3d &a) const
@@ -405,6 +420,14 @@ quaternion quaternion::normalize() const
         this->z / abs);
 }
 
+void quaternion::reset()
+{
+    this->w = this->base_w;
+    this->x = this->base_x;
+    this->y = this->base_y;
+    this->z = this->base_z;
+}
+
 quaternion quaternion::operator+(const quaternion &a) const
 {
     return this->add(a);
@@ -487,68 +510,26 @@ vec3d move(const vec3d &a, const vec3d &translation, float anglex, float angley,
     return vec3d(result.data[0][0], result.data[1][0], result.data[2][0]);
 }
 
-vec3d rotate_with_quaternion(const vec3d &a, const vec3d &axis, float angles[3])
+vec3d rotate_with_quaternion(const vec3d &a, const vec3d &axis, float angle)
 {   
-    float anglex = 0.0f, angley = 0.0f, anglez = 0.0f;
-    float angle = 0.0f;
-    
-    if (angles[1] != 0 || angles[2] != 0) {
-        anglex = angles[0];
-        angley = angles[1];
-        anglez = angles[2];
-    }
-    else {
-        angle = angles[0];
-    }
+    angle = angle / 2.0f;
+    float cosine = cos(angle);
+    float sine = sin(angle);
+    quaternion q = quaternion(cosine,sine * axis.x, sine * axis.y, sine * axis.z).normalize();
+    quaternion q_conjugate = q.conjugate();
+    quaternion q_a = quaternion(0, a.x, a.y, a.z);
+    quaternion q_result = q.mul(q_a).mul(q_conjugate);
+    return vec3d(q_result.x, q_result.y, q_result.z);
+}
 
-    float x = a.x;
-    float y = a.y;
-    float z = a.z;
-    float axis_x = axis.x;
-    float axis_y = axis.y;
-    float axis_z = axis.z;
-    float half_anglex = anglex / 2;
-    float half_angley = angley / 2;
-    float half_anglez = anglez / 2;
-    float half_angle = angle / 2;
-    float sin_x, sin_y, sin_z;
-    float cos_x, cos_y, cos_z;
-    float sine, cosine;
-    if (anglex != 0)
-    {
-        sin_x = sin(half_anglex);
-        cos_x = cos(half_anglex);
-    }
-    if (angley != 0)
-    {
-        sin_y = sin(half_angley);
-        cos_y = cos(half_angley);
-    }
-    if (anglez != 0)
-    {
-        sin_z = sin(half_anglez);
-        cos_z = cos(half_anglez);
-    }
-    if (angle != 0){
-        sine = sin(half_angle);
-        cosine = cos(half_angle);
-    }
-    
-    if(axis == vec3d(0, 0, 0)){
+vec3d rotate_with_quaternion_with_three_angles(const vec3d &a, float angle1, float angle2, float angle3){
+    vec3d axis1 = vec3d(1.0f, 0.0f, 0.0f);
+    vec3d axis2 = vec3d(0.0f, 1.0f, 0.0f);
+    vec3d axis3 = vec3d(0.0f, 0.0f, 1.0f);
 
-        quaternion q1 = quaternion(cos_x, sin_x * axis_x, 0, 0);
-        quaternion q2 = quaternion(cos_y, 0, sin_y * axis_y, 0);
-        quaternion q3 = quaternion(cos_z, 0, 0, sin_z * axis_z);
-        quaternion q = q1.mul(q2).mul(q3);
-        quaternion q_conjugate = q.conjugate();
-        quaternion q_a = quaternion(0, x, y, z);
-        quaternion q_result = q.mul(q_a).mul(q_conjugate);
-        return vec3d(q_result.x, q_result.y, q_result.z);
-    }else{
-        quaternion q = quaternion(cosine, sine * axis_x, sine * axis_y, sine * axis_z);
-        quaternion q_conjugate = q.conjugate();
-        quaternion q_a = quaternion(0, x, y, z);
-        quaternion q_result = q.mul(q_a).mul(q_conjugate);
-        return vec3d(q_result.x, q_result.y, q_result.z);
-    }
+    vec3d rotated_a = rotate_with_quaternion(a, axis1, angle1);
+    rotated_a = rotate_with_quaternion(rotated_a, axis2, angle2);
+    rotated_a = rotate_with_quaternion(rotated_a, axis3, angle3);
+
+    return rotated_a;
 }
