@@ -3,6 +3,19 @@
 #include <vector>
 using namespace std;
 
+class vec2d{
+    public:
+        float x, y, base_x, base_y;
+        vec2d(float x, float y);
+        vec2d add(const vec2d &a) const;
+        vec2d sub(const vec2d &a) const;
+        float abs() const;
+        vec2d scalar(float k) const;
+        float dot(const vec2d &a) const;
+        vec2d normalize() const;
+        float get_cos(const vec2d &a) const;
+};
+
 class vec3d
 {
 public:
@@ -16,6 +29,9 @@ public:
     float abs() const;
     vec3d normalize() const;
     float get_cos(const vec3d &a) const;
+    float scale();
+    float calc_point();
+
 
     vec3d operator+(const vec3d &a) const;
     vec3d operator-(const vec3d &a) const;
@@ -66,6 +82,6 @@ public:
 
 matrix solve(const matrix &a, const matrix &b);
 vec3d move(const vec3d &a, const vec3d &b, float anglex = 0.0f, float angley = 0.0f, float anglez = 0.0f);
-vec3d rotate_with_quaternion(const vec3d &a, const vec3d &axis, float anglex = 0.0f, float angley = 0.0f, float anglez = 0.0f);
+vec3d rotate_with_quaternion(const vec3d &a, const vec3d &axis = vec3d(0, 0, 0), float angles[3] = {0});
 
 #endif

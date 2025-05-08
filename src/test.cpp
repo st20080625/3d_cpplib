@@ -1,121 +1,140 @@
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_render.h>
 #include "3d.hpp"
 #include <iostream>
-#include <vector>
-#include <iomanip>
-#define _USE_MATH_DEFINES
 #include <cmath>
+#include <vector>
 
-// ベクトル表示用の出力演算子
-std::ostream& operator<<(std::ostream& os, const vec3d& v) {
-    os << "(" << v.x << ", " << v.y << ", " << v.z << ")";
-    return os;
-}
+void DrawCircle(SDL_Renderer* renderer, float centerX, float centerY, int radius)
+{
+    int offsetX = radius - 1;
+    int offsetY = 0;
+    int dx = 1;
+    int dy = 1;
+    int err = dx - (radius << 1);
+    centerX -= radius;
+    while (offsetX >= offsetY)
+    {
+        // 円の8方向に対称な点を描画
+        SDL_RenderPoint(renderer, centerX + offsetX, centerY + offsetY);
+        SDL_RenderPoint(renderer, centerX + offsetY, centerY + offsetX);
+        SDL_RenderPoint(renderer, centerX - offsetY, centerY + offsetX);
+        SDL_RenderPoint(renderer, centerX - offsetX, centerY + offsetY);
+        SDL_RenderPoint(renderer, centerX - offsetX, centerY - offsetY);
+        SDL_RenderPoint(renderer, centerX - offsetY, centerY - offsetX);
+        SDL_RenderPoint(renderer, centerX + offsetY, centerY - offsetX);
+        SDL_RenderPoint(renderer, centerX + offsetX, centerY - offsetY);
 
-// 行列表示用の出力演算子
-std::ostream& operator<<(std::ostream& os, const matrix& m) {
-    os << "\n";
-    for (int i = 0; i < m.rows; i++) {
-        os << "  [ ";
-        for (int j = 0; j < m.cols; j++) {
-            os << std::setw(8) << std::fixed << std::setprecision(4) << m.data[i][j];
-            if (j < m.cols - 1) os << " ";
+        if (err <= 0)
+        {
+            offsetY++;
+            err += dy;
+            dy += 2;
         }
-        os << " ]";
-        if (i < m.rows - 1) os << "\n";
+        
+        if (err > 0)
+        {
+            offsetX--;
+            dx += 2;
+            err += dx - (radius << 1);
+        }
     }
-    return os;
 }
 
-// クォータニオン表示用の出力演算子
-std::ostream& operator<<(std::ostream& os, const quaternion& q) {
-    os << "(" << q.w << ", " << q.x << ", " << q.y << ", " << q.z << ")";
-    return os;
+vec2d calc_coords(const vec3d &a, window_w, window_h) const{
+    float scale = 500/(500 + a.z);
+    float x = a.x / scale + window_w / 2;
+    float y = a.y / scale + window_w / 2;
+    x *= 100;
+    y *= 100;
+    return vec2d(x, y);
 }
 
-int main() {
-    // 初期値の設定
-    vec3d vec_a = vec3d(1, 2, 3);
-    vec3d vec_b = vec3d(4, 5, 6);
-    matrix a = matrix(vector<vector<float>>{{1, 2}, {3, 4}});
-    matrix b = matrix(vector<vector<float>>{{5, 6}, {7, 8}});
-    quaternion quat_a = quaternion(1, 2, 3, 4);
-    quaternion quat_b = quaternion(5, 6, 7, 8);
+int main()
+{
+    const int window_w = 1280;
+    const int window_h = 720;
 
-    // 計算実行
-    vec3d vec_c = vec_a + vec_b;
-    vec3d vec_d = vec_a - vec_b;  // 修正: 元のコードでは間違いがあったようです
-    vec3d vec_e = vec_a * 2.0f;
-    float dot = vec_a.dot(vec_b);
-    vec3d vec_f = vec_a.cross(vec_b);
-    float abs_a = vec_a.abs();
-    vec3d vec_g = vec_a.normalize();
-    float cos_a = vec_a.get_cos(vec_b);
+    if(!SDL_Init(SDL_INIT_VIDEO)){
+        return 1;
+    }
 
-    matrix matrix_c = a + b;
-    matrix matrix_d = a - b;
-    matrix matrix_e = a * 2.0f;
-    matrix matrix_f = a * b;
-    matrix matrix_g = a.transpose();
-    matrix inv_a = a.inverse();
-    float det_a = a.determinant();
-    matrix matrix_h = solve(a, b);
-    
-    // PI/2ではなく浮動小数点で計算するように修正
-    float half_pi = M_PI / 2.0f;  // 整数の1/2ではなく浮動小数点の割り算
-    vec3d vec_h = move(vec_a, vec_b, 0.0f, 0.0f, 0.0f);
-    vec3d vec_i = move(vec_a, vec3d(0, 0, 0), half_pi, half_pi, half_pi);
-    vec3d vec_j = move(vec_a, vec_b, half_pi, half_pi, half_pi);
+    //  SDLのWindowの作成
+    SDL_Window *window = SDL_CreateWindow("Hello SDL", window_w, window_h,0);
+    if(!window){
+        return 1;
+    }
 
-    quaternion quat_c = quat_a + quat_b;
-    quaternion quat_d = quat_a - quat_b;
-    quaternion quat_e = quat_a * 2.0f;
-    quaternion quat_f = quat_a * quat_b;
-    quaternion quat_g = quat_a.conjugate();
-    float abs_b = quat_a.abs();
-    quaternion quat_h = quat_a.normalize();
-    vec3d vec_k = rotate_with_quaternion(vec_a, vec_b, half_pi, half_pi, half_pi);
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, NULL);
+    if(!renderer){
+        return 1;
+    }
 
-    // 結果出力
-    std::cout << "===== ベクトル演算 =====" << std::endl;
-    std::cout << "vec_a = " << vec_a << std::endl;
-    std::cout << "vec_b = " << vec_b << std::endl;
-    std::cout << "vec_a + vec_b = " << vec_c << std::endl;
-    std::cout << "vec_a - vec_b = " << vec_d << std::endl;
-    std::cout << "vec_a * 2.0f = " << vec_e << std::endl;
-    std::cout << "vec_a.dot(vec_b) = " << dot << std::endl;
-    std::cout << "vec_a.cross(vec_b) = " << vec_f << std::endl;
-    std::cout << "vec_a.abs() = " << abs_a << std::endl;
-    std::cout << "vec_a.normalize() = " << vec_g << std::endl;
-    std::cout << "vec_a.get_cos(vec_b) = " << cos_a << std::endl;
+    // ループ開始前に一度画面を描画する
+    SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
+    SDL_RenderPresent(renderer);
 
-    std::cout << "\n===== 行列演算 =====" << std::endl;
-    std::cout << "a = " << a << std::endl;
-    std::cout << "b = " << b << std::endl;
-    std::cout << "a + b = " << matrix_c << std::endl;
-    std::cout << "a - b = " << matrix_d << std::endl;
-    std::cout << "a * 2.0f = " << matrix_e << std::endl;
-    std::cout << "a * b = " << matrix_f << std::endl;
-    std::cout << "a.transpose() = " << matrix_g << std::endl;
-    std::cout << "a.inverse() = " << inv_a << std::endl;
-    std::cout << "a.determinant() = " << det_a << std::endl;
-    std::cout << "solve(a, b) = " << matrix_h << std::endl;
+    SDL_Event ev;
+    //  メインループ
+    const float centerX = window_w / 2.0f;
+    const float centerY = window_h / 2.0f;
+    const float radius = 100.0f;
+    double angle = 0.0;
+    float x = 0.0f;
+    float y = 0.0f;
+    vec3d a = vec3d(1.0, 0.0, 0.0);
+    vec3d b = vec3d(0.0, 1.0, 0.0);
+    vec3d c = vec3d(0.0, 0.0, 1.0);
+    vec3d d = vec3d(1.0, 0.0, 1.0);
+    vec3d e = vec3d(1.0, 1.0, 0.0);
+    vec3d f = vec3d(0.0, 1.0, 0.0);
+    vec3d g = vec3d(0.0, 1.0, 1.0);
+    vec3d h = vec3d(1.0, 1.0, 1.0);
+    vector<vector<float>> coords = {
+        {a},
+        {b},
+        {c},
+        {d},
+        {e},
+        {f},
+        {g},
+        {h}
+    }
+    while (true)
+    {
+        //  システムイベントの処理
+        while (SDL_PollEvent(&ev))
+        {
+            //  ウィンドウを閉じる場合
+            if (ev.type == SDL_EVENT_QUIT)
+                return 0;
+        }
+        x = centerX + radius * cos(angle) + radius;
+        y = centerY + radius * sin(angle);
+        // 画面の描画
+        SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
+        SDL_RenderClear(renderer);
 
-    std::cout << "\n===== 3D変換 =====" << std::endl;
-    std::cout << "move(vec_a, vec_b, 0, 0, 0) = " << vec_h << std::endl;
-    std::cout << "move(vec_a, origin, π/2, π/2, π/2) = " << vec_i << std::endl;
-    std::cout << "move(vec_a, vec_b, π/2, π/2, π/2) = " << vec_j << std::endl;
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+        DrawCircle(renderer, x, y, 100);
+        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+        SDL_RenderPoint(renderer, centerX, centerY);
+        
+        SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
+        for(int i = 0; i < coords.size(); i++){
+            vec2d coord = calc_coords(coords[i], window_w, window_h);
+            SDL_RenderPoint(renderer, coord.x, coord.y);
+        }
 
-    std::cout << "\n===== クォータニオン =====" << std::endl;
-    std::cout << "quat_a = " << quat_a << std::endl;
-    std::cout << "quat_b = " << quat_b << std::endl;
-    std::cout << "quat_a + quat_b = " << quat_c << std::endl;
-    std::cout << "quat_a - quat_b = " << quat_d << std::endl;
-    std::cout << "quat_a * 2.0f = " << quat_e << std::endl;
-    std::cout << "quat_a * quat_b = " << quat_f << std::endl;
-    std::cout << "quat_a.conjugate() = " << quat_g << std::endl;
-    std::cout << "quat_a.abs() = " << abs_b << std::endl;
-    std::cout << "quat_a.normalize() = " << quat_h << std::endl;
-    std::cout << "rotate_with_quaternion(vec_a, vec_b, π/2, π/2, π/2) = " << vec_k << std::endl;
+        SDL_RenderPresent(renderer);
+        SDL_Delay(16); // 約60FPS
+        angle += 0.01;
+    }
 
+    // ループ終了時:作成したSDL関連のものを破棄する
+    SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(renderer);
     return 0;
 }
+
