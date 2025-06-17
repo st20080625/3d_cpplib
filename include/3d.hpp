@@ -1,19 +1,28 @@
 #ifndef D_CPP_3D_HPP
 #define D_CPP_3D_HPP
 #include <vector>
-using namespace std;
+#include <stdexcept>
 
-class vec2d{
-    public:
-        float x, y, base_x, base_y;
-        vec2d(float x, float y);
-        vec2d add(const vec2d &a) const;
-        vec2d sub(const vec2d &a) const;
-        float abs() const;
-        vec2d scalar(float k) const;
-        float dot(const vec2d &a) const;
-        vec2d normalize() const;
-        float get_cos(const vec2d &a) const;
+namespace cpp3d{
+
+using std::vector;
+class vec2d
+{
+public:
+    float x, y, base_x, base_y;
+    vec2d(float x, float y);
+    vec2d add(const vec2d &a) const;
+    vec2d sub(const vec2d &a) const;
+    float abs() const;
+    vec2d scalar(float k) const;
+    float dot(const vec2d &a) const;
+    vec2d normalize() const;
+    float get_cos(const vec2d &a) const;
+	vec2d operator+(const vec2d &a) const;
+	vec2d operator-(const vec2d &a) const;
+	vec2d operator*(float k) const;
+	vec2d operator*(const vec2d &a) const;
+	vec2d operator==(const vec2d &a) const;
 };
 
 class vec3d
@@ -32,7 +41,6 @@ public:
     float scale();
     float calc_point();
     void reset();
-
 
     vec3d operator+(const vec3d &a) const;
     vec3d operator-(const vec3d &a) const;
@@ -86,4 +94,5 @@ matrix solve(const matrix &a, const matrix &b);
 vec3d move(const vec3d &a, const vec3d &b, float anglex = 0.0f, float angley = 0.0f, float anglez = 0.0f);
 vec3d rotate_with_quaternion(const vec3d &a, const vec3d &axis, float angle);
 vec3d rotate_with_quaternion_with_three_angles(const vec3d &a, float angle1, float angle2, float angle3);
+}
 #endif

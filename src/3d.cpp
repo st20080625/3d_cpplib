@@ -1,7 +1,13 @@
 #include <3d.hpp>
 #include <iostream>
 #include <cmath>
+#include <stdexcept>
 
+
+namespace cpp3d{
+
+using std::exception;
+using std::invalid_argument;
 vec2d::vec2d(float x, float y)
 {
     this->x = x;
@@ -48,6 +54,24 @@ float vec2d::get_cos(const vec2d &a) const
     float a_abs = a.abs();
     float cos = dot / (this_abs * a_abs);
     return cos;
+}
+
+vec2d vec2d::operator+(const vec2d &a) const{
+	return this->add(a);
+}
+
+vec2d vec2d::operator-(const vec2d &a) const{
+	return this->sub(a);
+}
+
+vec2d vec2d::operator*(float k) const{
+	return this->scalar(k);
+}
+
+bool vec2d::operator==(const vec2d &a) const{
+	const float epsilon = 1e-6f;
+    return (std::abs(this->x - a.x) < epsilon &&
+            std::abs(this->y - a.y) < epsilon);
 }
 
 vec3d::vec3d(float x, float y, float z)
@@ -511,18 +535,19 @@ vec3d move(const vec3d &a, const vec3d &translation, float anglex, float angley,
 }
 
 vec3d rotate_with_quaternion(const vec3d &a, const vec3d &axis, float angle)
-{   
+{
     angle = angle / 2.0f;
     float cosine = cos(angle);
     float sine = sin(angle);
-    quaternion q = quaternion(cosine,sine * axis.x, sine * axis.y, sine * axis.z).normalize();
+    quaternion q = quaternion(cosine, sine * axis.x, sine * axis.y, sine * axis.z).normalize();
     quaternion q_conjugate = q.conjugate();
     quaternion q_a = quaternion(0, a.x, a.y, a.z);
     quaternion q_result = q.mul(q_a).mul(q_conjugate);
     return vec3d(q_result.x, q_result.y, q_result.z);
 }
 
-vec3d rotate_with_quaternion_with_three_angles(const vec3d &a, float angle1, float angle2, float angle3){
+vec3d rotate_with_quaternion_with_three_angles(const vec3d &a, float angle1, float angle2, float angle3)
+{
     vec3d axis1 = vec3d(1.0f, 0.0f, 0.0f);
     vec3d axis2 = vec3d(0.0f, 1.0f, 0.0f);
     vec3d axis3 = vec3d(0.0f, 0.0f, 1.0f);
@@ -532,4 +557,5 @@ vec3d rotate_with_quaternion_with_three_angles(const vec3d &a, float angle1, flo
     rotated_a = rotate_with_quaternion(rotated_a, axis3, angle3);
 
     return rotated_a;
+}
 }
